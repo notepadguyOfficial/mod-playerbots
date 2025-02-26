@@ -1,9 +1,9 @@
 name: windows-build
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "openai-api" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "openai-api" ]
 
 jobs:
   windows-build:

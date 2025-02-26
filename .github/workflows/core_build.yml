@@ -2,9 +2,9 @@ name: ubuntu-build
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "openai-api" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "openai-api" ]
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
             build_type: Release
-            
+
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }}-${{ matrix.cpp_compiler }}
 
@@ -42,13 +42,13 @@ jobs:
         shell: bash
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-          
+
       - name: Checkout Playerbot Module
         uses: actions/checkout@v3
         with:
           repository: 'liyunfan1223/mod-playerbots'
           path: 'modules/mod-playerbots'
-      
+
       - name: Cache
         uses: actions/cache@v4
         with:

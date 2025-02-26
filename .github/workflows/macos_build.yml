@@ -1,9 +1,9 @@
 name: macos-build
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "openai-api" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "openai-api" ]
 
 # concurrency:
 #   group: ${{ github.head_ref }} || concat(${{ github.ref }}, ${{ github.workflow }})
