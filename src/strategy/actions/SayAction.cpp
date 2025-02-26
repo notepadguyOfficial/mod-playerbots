@@ -506,6 +506,9 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32& type, uint32& guid1, uint
     // auto messageRepy = GenerateReplyMessage(bot, msg, guid1, name);
     // SendGeneralResponse(bot, chatChannelSource, messageRepy, name);
 
+    if(!sConfigMgr->GetOption<bool>("AiPlayerbot.LLMEnabled", true))
+        return;
+
     if (bot->GetPlayerbotAI()
         && sPlayerbotAIConfig.llmEnabled > 0
         && (bot->GetPlayerbotAI()->HasStrategy("ai chat", BotState::BOT_STATE_NON_COMBAT)
