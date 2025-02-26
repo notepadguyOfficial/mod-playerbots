@@ -27,6 +27,12 @@
     #include "PlayerbotTextMgr.h"
 #endif
 
+LLMInterface* LLMInterface::Instance()
+{
+    static LLMInterface instance;
+    return &instance;
+}
+
 std::string LLMInterface::SanitizeForJson(const std::string& input) {
     std::string sanitized;
     for (char c : input) {
@@ -126,17 +132,17 @@ inline std::string RecvWithTimeout(int sock, int timeout_seconds, int& bytesRead
 std::string LLMInterface::Generate(const std::string& prompt, int timeOutSeconds, int maxGenerations, std::vector<std::string> & debugLines) {
     bool debug = !debugLines.empty();
 
-    if (sLLMInterface.generationCount > maxGenerations)
+    if (sLLMInterface->generationCount > maxGenerations)
     {
         if (debug)
-            debugLines.push_back("Maxium generations reached " + std::to_string(sLLMInterface.generationCount) + "/" + std::to_string(maxGenerations));
+            debugLines.push_back("Maxium generations reached " + std::to_string(sLLMInterface->generationCount) + "/" + std::to_string(maxGenerations));
         return {};
     }
 
-    sLLMInterface.generationCount++;
+    sLLMInterface->generationCount++;
 
     if (debug)
-        debugLines.push_back("Generations start " + std::to_string(sLLMInterface.generationCount) + "/" + std::to_string(maxGenerations));
+        debugLines.push_back("Generations start " + std::to_string(sLLMInterface->generationCount) + "/" + std::to_string(maxGenerations));
 
 #ifdef _WIN32
     if (debug)
@@ -316,7 +322,7 @@ std::string LLMInterface::Generate(const std::string& prompt, int timeOutSeconds
     close(sock);
 #endif
 
-    sLLMInterface.generationCount--;
+    sLLMInterface->generationCount--;
 
     if (debug)
     {

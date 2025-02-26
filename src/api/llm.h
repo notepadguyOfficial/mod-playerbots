@@ -6,16 +6,12 @@
 #include <vector>
 
 class LLMInterface {
+    LLMInterface() = default;
+    LLMInterface(LLMInterface const&) = delete;
+    LLMInterface& operator=(LLMInterface const&) = delete;
+    ~LLMInterface() = default;
 public:
-    LLMInterface() {}
-    LLMInterface(const LLMInterface&) = delete;
-    LLMInterface& operator=(const LLMInterface&) = delete;
-
-    static LLMInterface& Instance()
-    {
-        static LLMInterface instance;
-        return instance;
-    }
+    static LLMInterface* instance();
 
     static std::string SanitizeForJson(const std::string& input);
     static std::string Generate(const std::string& prompt, int timeOutSeconds, int maxGenerations, std::vector<std::string>& debugLines);
