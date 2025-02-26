@@ -532,6 +532,98 @@ bool PlayerbotAIConfig::Initialize()
     freeFood = sConfigMgr->GetOption<bool>("AiPlayerbot.FreeFood", true);
     randomBotGroupNearby = sConfigMgr->GetOption<bool>("AiPlayerbot.RandomBotGroupNearby", true);
 
+    //LLM START
+    llmEnabled = sConfigMgr->GetOption<bool>("AiPlayerbot.LLMEnabled", true);
+    llmApiEndpoint = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMApiEndpoint", "http://127.0.0.1:5001/api/v1/generate");
+    try {
+        llmEndPointUrl = parseUrl(llmApiEndpoint);
+    }
+    catch (const std::invalid_argument& e) {
+        LOG_ERROR("playerbots", "Unable to parse LLMApiEndpoint url: {}", e.what());
+    }
+    llmApiKey = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMApiKey", "");
+    llmApiJson = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMApiJson", "{ \"max_length\": 100, \"prompt\": \"[<pre prompt>]<context> <prompt> <post prompt>\"}");
+    llmContextLength = sConfigMgr->GetOption<int32>("AiPlayerbot.LLMContextLength", 4096);
+    llmGenerationTimeout = sConfigMgr->GetOption<int32>("AiPlayerbot.LLMGenerationTimeout", 600);
+    llmMaxSimultaniousGenerations = sConfigMgr->GetOption<int32>("AiPlayerbot.LLMMaxSimultaniousGenerations", 100);
+
+
+    llmPrePrompt = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMPrePrompt", "You are a roleplaying character in World of Warcraft: <expansion name>. Your name is <bot name>. The <other type> <other name> is speaking to you <channel name> and is an <other gender> <other race> <other class> of level <other level>. You are level <bot level> and play as a <bot gender> <bot race> <bot class> that is currently in <bot subzone> <bot zone>. Answer as a roleplaying character. Limit responses to 100 characters.");
+
+    llmPreRpgPrompt = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMRpgPrompt", "In World of Warcraft: <expansion name> in <bot zone> <bot subzone> stands <bot type> <bot name> a level <bot level> <bot gender> <bot race> <bot class>.  Standing nearby is <unit type> <unit name> <unit subname> a level <unit level> <unit gender> <unit race> <unit faction> <unit class>. Answer as a roleplaying character. Limit responses to 100 characters.");
+
+    llmPrompt = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMPrompt", "<receiver name>:<initial message>");
+    llmPostPrompt = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMPostPrompt", "<sender name>:");
+
+    llmResponseStartPattern = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMResponseStartPattern", R"(("text":\s*"))");
+    llmResponseEndPattern = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMResponseEndPattern", R"(("|\b(?!<sender name>\b)(\w+):))");
+    llmResponseDeletePattern = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMResponseDeletePattern", R"((\\n|<sender name>:|\\[^ ]+))");
+    llmResponseSplitPattern = sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMResponseSplitPattern", R"((\*.*?\*)|(\[.*?\])|(\'.*\')|([^\*\[\] ][^\*\[\]]+?[.?!]))");
+
+    if (false) //Disable for release
+    {
+        LOG_ERROR("playerbots", "AiPlayerbot.LLMResponseStartPattern = {}", llmResponseStartPattern.c_str());
+        LOG_ERROR("playerbots", "AiPlayerbot.LLMResponseEndPattern = {}", llmResponseEndPattern.c_str());
+        LOG_ERROR("playerbots", "AiPlayerbot.LLMResponseDeletePattern = {}", llmResponseDeletePattern.c_str());
+        LOG_ERROR("playerbots", "AiPlayerbot.LLMResponseSplitPattern = {}", llmResponseSplitPattern.c_str());
+    }
+
+    try {
+        std::regex pattern(llmResponseStartPattern);
+    }
+    catch (const std::regex_error& e) {
+        LOG_ERROR("playerbots", "Regex error in {}: {}", llmResponseStartPattern.c_str(), e.what());
+    }
+
+    try {
+        std::regex pattern(llmResponseEndPattern);
+    }
+    catch (const std::regex_error& e) {
+        LOG_ERROR("playerbots", "Regex error in {}: {}", llmResponseEndPattern.c_str(), e.what());
+    }
+
+    try {
+        std::regex pattern(llmResponseDeletePattern);
+    }
+    catch (const std::regex_error& e) {
+        LOG_ERROR("playerbots", "Regex error in {}: {}", llmResponseDeletePattern.c_str(), e.what());
+    }
+
+    try {
+        std::regex pattern(llmResponseSplitPattern);
+    }
+    catch (const std::regex_error& e) {
+        LOG_ERROR("playerbots", "Regex error in {}: {}", llmResponseSplitPattern.c_str(), e.what());
+    }
+
+    llmGlobalContext = sConfigMgr->GetOption<bool>("AiPlayerbot.LLMGlobalContext", true);
+    llmBotToBotChatChance = sConfigMgr->GetOption<int32>("AiPlayerbot.LLMBotToBotChatChance", 0);
+    llmRpgAIChatChance = sConfigMgr->GetOption<int32>("AiPlayerbot.LLMRpgAIChatChance", 100);
+
+    std::list<std::string> blockedChannels;
+    LoadListString<std::list<std::string>>(sConfigMgr->GetOption<std::string>("AiPlayerbot.LLMBlockedReplyChannels", ""), blockedChannels);
+    std::map<std::string, ChatChannelSource> sourceName;
+    sourceName["guild"] = ChatChannelSource::SRC_GUILD;
+    sourceName["world"] = ChatChannelSource::SRC_WORLD;
+    sourceName["general"] = ChatChannelSource::SRC_GENERAL;
+    sourceName["trade"] = ChatChannelSource::SRC_TRADE;
+    sourceName["lfg"] = ChatChannelSource::SRC_LOOKING_FOR_GROUP;
+    sourceName["ldefence"] = ChatChannelSource::SRC_LOCAL_DEFENSE;
+    sourceName["wdefence"] = ChatChannelSource::SRC_WORLD_DEFENSE;
+    sourceName["grecruitement"] = ChatChannelSource::SRC_GUILD_RECRUITMENT;
+    sourceName["say"] = ChatChannelSource::SRC_SAY;
+    sourceName["whisper"] = ChatChannelSource::SRC_WHISPER;
+    sourceName["emote"] = ChatChannelSource::SRC_EMOTE;
+    sourceName["temote"] = ChatChannelSource::SRC_TEXT_EMOTE;
+    sourceName["yell"] = ChatChannelSource::SRC_YELL;
+    sourceName["party"] = ChatChannelSource::SRC_PARTY;
+    sourceName["raid"] = ChatChannelSource::SRC_RAID;
+
+    for (auto& channelName : blockedChannels)
+        llmBlockedReplyChannels.insert(sourceName[channelName]);
+
+    //LLM END
+
     // arena
     randomBotArenaTeam2v2Count = sConfigMgr->GetOption<int32>("AiPlayerbot.RandomBotArenaTeam2v2Count", 10);
     randomBotArenaTeam3v3Count = sConfigMgr->GetOption<int32>("AiPlayerbot.RandomBotArenaTeam3v3Count", 10);
@@ -552,7 +644,7 @@ bool PlayerbotAIConfig::Initialize()
     {
         sRandomPlayerbotMgr->Init();
     }
-    
+
     sRandomItemMgr->Init();
     sRandomItemMgr->InitAfterAhBot();
     sPlayerbotTextMgr->LoadBotTexts();

@@ -41,7 +41,7 @@
 #        MAGE
 #        WARLOCK
 #        DRUID
-#    RANDOM BOT DEFAULT TALENT SPEC 
+#    RANDOM BOT DEFAULT TALENT SPEC
 #        WARRIOR
 #        PALADIN
 #        HUNTER
@@ -54,10 +54,11 @@
 #        DRUID
 #    PLAYERBOT SYSTEM SETTINGS
 #        DATABASE & CONNECTIONS
-#        DEBUG        
+#        DEBUG
 #        CHAT SETTINGS
 #        LOGS
 #    DEPRECIATED (TEMPORARY)
+#    LLM INTEGRATION SETTINGS
 #
 #
 #
@@ -781,7 +782,7 @@ AiPlayerbot.RandomBotAutoJoinBG = 0
 # Known issue: When enabling a lot of brackats in combination with multiple instances,
 #              can lead to more instances created by bots than intended (over-queuing).
 #
-# This section controls the level brackets and 
+# This section controls the level brackets and
 # automatic bot participation in battlegrounds and arenas.
 #
 # Brackets:
@@ -1170,7 +1171,7 @@ AiPlayerbot.PremadeSpecLink.11.3.80 = -553202032322010053100030310511-205503012
 ###################################
 
 ####################################################################################################
-# 
+#
 #
 #
 
@@ -1222,7 +1223,7 @@ AiPlayerbot.WorldBuff.0.11.3.80.80 = 53760,57358                   #DRUID FERAL 
 ###################################
 
 ####################################################################################################
-# 
+#
 #
 #
 
@@ -1670,3 +1671,16 @@ AiPlayerbot.TargetPosRecalcDistance = 0.1
 
 # Allow bots to be summoned near innkeepers
 AiPlayerbot.SummonAtInnkeepersEnabled = 1
+
+#
+#
+#
+####################################################################################################
+
+##############################################
+# LLM Integration Settings                   #
+##############################################
+AiPlayerbot.LLMEnabled = 1
+AiPlayerbot.LLMApiEndpoint = "http://127.0.0.1:5001/api/v1/generate"
+AiPlayerbot.LLMApiKey = ""
+AiPlayerbot.LLMBlockedReplyChannels = ""

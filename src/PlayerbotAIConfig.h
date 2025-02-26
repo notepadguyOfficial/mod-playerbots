@@ -292,6 +292,12 @@ public:
     uint32 botActiveAloneSmartScaleWhenMinLevel;
     uint32 botActiveAloneSmartScaleWhenMaxLevel;
 
+    std::string llmApiEndpoint, llmApiKey, llmApiJson, llmPrePrompt, llmPreRpgPrompt, llmPrompt, llmPostPrompt, llmResponseStartPattern, llmResponseEndPattern, llmResponseDeletePattern, llmResponseSplitPattern;
+    uint32 llmEnabled, llmContextLength, llmBotToBotChatChance, llmGenerationTimeout, llmMaxSimultaniousGenerations, llmRpgAIChatChance;
+    bool llmGlobalContext;
+    ParsedUrl llmEndPointUrl;
+    std::set<uint32> llmBlockedReplyChannels;
+
     bool freeMethodLoot;
     int32 lootRollLevel;
     std::string autoPickReward;
